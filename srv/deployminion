@@ -1,0 +1,9 @@
+#!/bin/bash
+echo "deploying salt minion"
+yum -y install epel-release
+yum -y install salt-minion
+echo "Configuring and start salt"
+sed -i.orig 's/#master:.*$/master: 192.168.33.10/' /etc/salt/minion
+chkconfig salt-minion on
+service salt-minion start
+

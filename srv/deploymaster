@@ -1,0 +1,22 @@
+#!/bin/bash
+echo "deploying salt"
+yum -y install epel-release
+yum -y install salt-master salt-minion
+echo "configuring and starting"
+sed -i.orig 's!#interface:.*$!interface: 192.168.33.10\nfile_roots:\n  base:\n    - /srv/salt/\npillar_roots:\n  base:\n    - /srv/pillar\n!' /etc/salt/master
+ln -s /vagrant/srv/salt /srv/salt
+ln -s /vagrant/srv/pillar /srv/pillar
+chkconfig salt-master on
+service salt-master start
+sed -i.orig 's/#master: 192.168.33.10/' /etc/salt/minion
+chkconfig salt-minion on
+service salt-minion start
+echo "launching subscript to be run in 15 minutes :"
+nohup bash <<EOF 1>/vagrant/srv/salt-init.log 2>&1 &
+sleep 900
+salt-key -y -a master
+salt-key -y -a minion-1
+salt-key -y -a minion-2
+sleep 30
+salt '*' state.highstate
+EOF
